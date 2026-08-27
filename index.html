@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#1B1D18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tennis Log">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Tennis Log</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --ink:#1B1D18;
+    --ink-2:#24271F;
+    --ink-3:#2E3226;
+    --line: rgba(243,239,227,0.10);
+    --chalk:#F3EFE3;
+    --chalk-dim: rgba(243,239,227,0.56);
+    --chalk-faint: rgba(243,239,227,0.30);
+    --grass:#4C7A3F;
+    --grass-soft: rgba(76,122,63,0.20);
+    --clay:#C1553A;
+    --clay-soft: rgba(193,85,58,0.20);
+    --hard:#3E6E8E;
+    --hard-soft: rgba(62,110,142,0.20);
+    --ball:#D9E14C;
+    --win:#6FCB74;
+    --win-soft: rgba(111,203,116,0.16);
+    --loss:#E2574C;
+    --loss-soft: rgba(226,87,76,0.16);
+    --draw:#B8B2A0;
+    --draw-soft: rgba(184,178,160,0.16);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background: var(--ink);
+    color: var(--chalk);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+  button, input, select{ font-family: inherit; color: inherit; }
+
+  a{ color: var(--ball); }
+
+  .app{
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background:
+      radial-gradient(1200px 400px at 50% -10%, rgba(217,225,76,0.08), transparent 60%),
+      var(--ink);
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding: calc(16px + var(--safe-top)) 20px 14px;
+    position: sticky;
+    top:0;
+    z-index: 5;
+    background: linear-gradient(var(--ink) 70%, transparent);
+  }
+  .brand-mark{
+    width:30px;height:30px;border-radius:9px;
+    background: var(--ink-2);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    border: 1px solid var(--line);
+  }
+  .brand-mark svg{ width:18px; height:18px; }
+  .brand-text{
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .brand-sub{
+    margin-left:auto;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--chalk-dim);
+    text-transform: uppercase;
+  }
+
+  /* ---------- Views ---------- */
+  .view{
+    display:none;
+    padding: 4px 20px 24px;
+    flex: 1;
+  }
+  .view.active{ display:block; animation: fade-in .22s ease-out; }
+  @media (prefers-reduced-motion: reduce){
+    .view.active{ animation: none; }
+  }
+  @keyframes fade-in{
+    from{ opacity:0; transform: translateY(6px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  .section-title{
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--chalk-dim);
+    margin: 26px 2px 10px;
+  }
+  .section-title:first-child{ margin-top: 6px; }
+
+  .card{
+    background: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+  }
+
+  /* ---------- Form ---------- */
+  .field{ margin-bottom: 16px; }
+  .field label{
+    display:block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--chalk-dim);
+    margin-bottom: 7px;
+  }
+  .field input[type="text"],
+  .field input[type="date"],
+  .field input[type="time"]{
+    width:100%;
+    background: var(--ink-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 12px 13px;
+    font-size: 15px;
+    color: var(--chalk);
+  }
+  .field input:focus-visible, .choice:focus-visible, .tab:focus-visible, .btn:focus-visible, .icon-btn:focus-visible{
+    outline: 2px solid var(--ball);
+    outline-offset: 2px;
+  }
+  .row2{ display:flex; gap:12px; }
+  .row2 .field{ flex:1; }
+
+  .choice-group{
+    display:flex;
+    gap:8px;
+  }
+  .choice{
+    flex:1;
+    border: 1px solid var(--line);
+    background: var(--ink-3);
+    color: var(--chalk-dim);
+    border-radius: var(--radius-sm);
+    padding: 12px 6px;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align:center;
+    cursor:pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease, transform .1s ease;
+  }
+  .choice:active{ transform: scale(0.97); }
+  @media (prefers-reduced-motion: reduce){ .choice{ transition:none; } .choice:active{ transform:none; } }
+
+  .choice[data-surface="ERBA"].selected{ background: var(--grass-soft); border-color: var(--grass); color: var(--chalk); }
+  .choice[data-surface="TERRA"].selected{ background: var(--clay-soft); border-color: var(--clay); color: var(--chalk); }
+  .choice[data-surface="CEMENTO"].selected{ background: var(--hard-soft); border-color: var(--hard); color: var(--chalk); }
+  .choice[data-eta].selected{ background: var(--ink); border-color: var(--ball); color: var(--ball); }
+  .choice[data-esito="VITTORIA"].selected{ background: var(--win-soft); border-color: var(--win); color: var(--win); }
+  .choice[data-esito="SCONFITTA"].selected{ background: var(--loss-soft); border-color: var(--loss); color: var(--loss); }
+  .choice[data-esito="PAREGGIO"].selected{ background: var(--draw-soft); border-color: var(--draw); color: var(--chalk); }
+
+  .sets-row{ display:flex; gap:10px; }
+  .sets-row .field{ flex:1; margin-bottom:0; }
+  .sets-row input{ text-align:center; }
+
+  .btn-save{
+    width:100%;
+    margin-top: 22px;
+    padding: 15px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--ball);
+    color: #1B1D18;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor:pointer;
+  }
+  .btn-save:active{ transform: scale(0.99); }
+
+  /* ---------- Storico ---------- */
+  .match-card{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    background: var(--ink-2);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--draw);
+    border-radius: var(--radius-md);
+    padding: 13px 14px;
+    margin-bottom: 10px;
+  }
+  .match-card[data-esito="VITTORIA"]{ border-left-color: var(--win); }
+  .match-card[data-esito="SCONFITTA"]{ border-left-color: var(--loss); }
+  .match-card[data-esito="PAREGGIO"]{ border-left-color: var(--draw); }
+  .match-main{ flex:1; min-width:0; }
+  .match-top{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .match-opp{ font-weight:700; font-size:14.5px; }
+  .match-esito{
+    font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+    padding:2px 7px; border-radius:20px;
+  }
+  .match-card[data-esito="VITTORIA"] .match-esito{ background:var(--win-soft); color:var(--win); }
+  .match-card[data-esito="SCONFITTA"] .match-esito{ background:var(--loss-soft); color:var(--loss); }
+  .match-card[data-esito="PAREGGIO"] .match-esito{ background:var(--draw-soft); color:var(--chalk); }
+  .match-meta{ margin-top:4px; font-size:12.5px; color:var(--chalk-dim); }
+  .match-meta .dot{ margin:0 5px; opacity:.5; }
+  .match-score{ margin-top:5px; font-size:12.5px; color:var(--chalk-faint); font-variant-numeric: tabular-nums; }
+  .icon-btn{
+    background:transparent; border:none; color:var(--chalk-faint);
+    padding:6px; border-radius:8px; cursor:pointer; flex-shrink:0;
+  }
+  .icon-btn:hover{ color: var(--loss); }
+  .icon-btn svg{ width:17px; height:17px; display:block; }
+
+  .empty{
+    text-align:center;
+    color: var(--chalk-dim);
+    padding: 44px 20px;
+    font-size: 13.5px;
+    line-height:1.6;
+  }
+  .empty b{ display:block; color: var(--chalk); font-size:15px; margin-bottom:6px; }
+
+  /* ---------- Statistiche ---------- */
+  .scoreboard{
+    display:flex;
+    align-items:center;
+    gap: 18px;
+    padding: 20px 18px;
+  }
+  .ring-wrap{ position:relative; width:92px; height:92px; flex-shrink:0; }
+  .ring{ width:100%; height:100%; border-radius:50%; background: conic-gradient(var(--win) calc(var(--pct,0) * 3.6deg), var(--ink-3) 0deg); }
+  .ring-hole{ position:absolute; inset:9px; border-radius:50%; background:var(--ink-2); display:flex; align-items:center; justify-content:center; flex-direction:column; }
+  .ring-pct{ font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; }
+  .ring-label{ font-size:8.5px; letter-spacing:.08em; color:var(--chalk-dim); text-transform:uppercase; margin-top:1px; }
+
+  .vsp-row{ display:flex; gap:16px; flex:1; }
+  .vsp{ text-align:center; }
+  .vsp-num{ font-size:26px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; line-height:1; }
+  .vsp[data-k="V"] .vsp-num{ color: var(--win); }
+  .vsp[data-k="S"] .vsp-num{ color: var(--loss); }
+  .vsp[data-k="P"] .vsp-num{ color: var(--draw); }
+  .vsp-lbl{ font-size:9.5px; letter-spacing:.1em; color:var(--chalk-dim); text-transform:uppercase; margin-top:3px; }
+
+  .tot-line{
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 12px 18px 16px; border-top:1px solid var(--line);
+    font-size:12px; color:var(--chalk-dim);
+  }
+  .tot-line b{ color:var(--chalk); font-variant-numeric:tabular-nums; }
+
+  .breakdown{ margin-bottom:10px; }
+  .bd-head{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .bd-dot{ width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+  .bd-name{ font-weight:800; font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; }
+  .bd-count{ margin-left:auto; font-size:11.5px; color:var(--chalk-dim); font-variant-numeric:tabular-nums; }
+  .bd-bar{ display:flex; height:10px; border-radius:6px; overflow:hidden; background:var(--ink-3); }
+  .bd-seg{ height:100%; }
+  .bd-seg.v{ background: var(--win); }
+  .bd-seg.s{ background: var(--loss); }
+  .bd-seg.p{ background: var(--draw); }
+  .bd-legend{ display:flex; gap:14px; margin-top:7px; font-size:11px; color:var(--chalk-dim); }
+  .bd-legend span b{ color:var(--chalk); font-variant-numeric:tabular-nums; }
+  .bd-empty{ font-size:12px; color:var(--chalk-faint); padding: 2px 0 4px; }
+
+  .util-row{ display:flex; gap:10px; margin-top:22px; }
+  .util-btn{
+    flex:1; background:var(--ink-2); border:1px solid var(--line); color:var(--chalk-dim);
+    border-radius: var(--radius-sm); padding:11px; font-size:12px; font-weight:700;
+    letter-spacing:.03em; cursor:pointer; text-align:center;
+  }
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position: fixed;
+    left:50%; bottom: calc(84px + var(--safe-bottom));
+    transform: translate(-50%, 14px);
+    background: var(--chalk); color: var(--ink);
+    padding: 11px 18px;
+    border-radius: 30px;
+    font-size: 13px; font-weight:700;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    opacity:0; pointer-events:none;
+    transition: opacity .2s ease, transform .2s ease;
+    z-index: 20;
+    max-width: 90%;
+  }
+  .toast.show{ opacity:1; transform: translate(-50%, 0); pointer-events:auto; }
+  @media (prefers-reduced-motion: reduce){ .toast{ transition:none; } }
+
+  /* ---------- Tab bar ---------- */
+  .tabbar{
+    display:flex;
+    border-top: 1px solid var(--line);
+    background: rgba(27,29,24,0.92);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    bottom:0;
+    padding-bottom: var(--safe-bottom);
+  }
+  .tab{
+    flex:1;
+    background:none; border:none;
+    color: var(--chalk-faint);
+    padding: 11px 4px 10px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-size: 10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    cursor:pointer;
+  }
+  .tab svg{ width:20px; height:20px; }
+  .tab.active{ color: var(--ball); }
+
+  ::selection{ background: var(--ball); color:#1B1D18; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand-mark" id="brand-icon"></div>
+    <div class="brand-text">Tennis Log</div>
+    <div class="brand-sub" id="brand-sub"></div>
+  </header>
+
+  <!-- ============ VIEW: NUOVA PARTITA ============ -->
+  <main class="view active" id="view-partita">
+    <div class="section-title">Nuova partita</div>
+    <form id="form-partita">
+      <div class="row2">
+        <div class="field">
+          <label for="f-data">Data</label>
+          <input type="date" id="f-data" required>
+        </div>
+        <div class="field">
+          <label for="f-orario">Orario</label>
+          <input type="time" id="f-orario">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="f-avversario">Avversario</label>
+        <input type="text" id="f-avversario" placeholder="Nome e cognome" required>
+      </div>
+
+      <div class="field">
+        <label>Superficie</label>
+        <div class="choice-group" id="grp-superficie">
+          <div class="choice" data-surface="ERBA">Erba</div>
+          <div class="choice" data-surface="TERRA">Terra</div>
+          <div class="choice" data-surface="CEMENTO">Cemento</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Età avversario</label>
+        <div class="choice-group" id="grp-eta">
+          <div class="choice" data-eta="OVER">Over</div>
+          <div class="choice" data-eta="UNDER">Under</div>
+          <div class="choice" data-eta="NESSUNO">Nessuno</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Punteggio set (opzionale)</label>
+        <div class="sets-row">
+          <div class="field"><input type="text" id="f-set1" placeholder="1° set" inputmode="text"></div>
+          <div class="field"><input type="text" id="f-set2" placeholder="2° set" inputmode="text"></div>
+          <div class="field"><input type="text" id="f-set3" placeholder="3° set" inputmode="text"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Risultato</label>
+        <div class="choice-group" id="grp-esito">
+          <div class="choice" data-esito="VITTORIA">Vittoria</div>
+          <div class="choice" data-esito="SCONFITTA">Sconfitta</div>
+          <div class="choice" data-esito="PAREGGIO">Pareggio</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-save">Salva partita</button>
+    </form>
+  </main>
+
+  <!-- ============ VIEW: STORICO ============ -->
+  <main class="view" id="view-storico">
+    <div class="section-title">Storico partite</div>
+    <div id="storico-list"></div>
+  </main>
+
+  <!-- ============ VIEW: STATISTICHE ============ -->
+  <main class="view" id="view-statistiche">
+    <div class="section-title">Record generale</div>
+    <div class="card">
+      <div class="scoreboard">
+        <div class="ring-wrap">
+          <div class="ring" id="ring"></div>
+          <div class="ring-hole">
+            <div class="ring-pct" id="ring-pct">0%</div>
+            <div class="ring-label">vittorie</div>
+          </div>
+        </div>
+        <div class="vsp-row">
+          <div class="vsp" data-k="V"><div class="vsp-num" id="tot-v">0</div><div class="vsp-lbl">V</div></div>
+          <div class="vsp" data-k="S"><div class="vsp-num" id="tot-s">0</div><div class="vsp-lbl">S</div></div>
+          <div class="vsp" data-k="P"><div class="vsp-num" id="tot-p">0</div><div class="vsp-lbl">P</div></div>
+        </div>
+      </div>
+      <div class="tot-line"><span>Totale partite giocate</span><b id="tot-n">0</b></div>
+    </div>
+
+    <div class="section-title">Per superficie</div>
+    <div class="card" id="stat-superficie"></div>
+
+    <div class="section-title">Per età avversario</div>
+    <div class="card" id="stat-eta"></div>
+
+    <div class="util-row">
+      <button class="util-btn" id="btn-export">Esporta backup (.json)</button>
+      <button class="util-btn" id="btn-import">Importa backup</button>
+    </div>
+    <input type="file" id="file-import" accept="application/json" style="display:none">
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab active" data-view="partita" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Partita
+    </button>
+    <button class="tab" data-view="storico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Storico
+    </button>
+    <button class="tab" data-view="statistiche">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Statistiche
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Brand mark (logo shown in the top bar) ---------------- */
+  var BRAND_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#1B1D18"/><circle cx="50" cy="50" r="34" fill="#D9E14C"/><path d="M50 16 C 38 28, 38 72, 50 84" fill="none" stroke="#1B1D18" stroke-width="4"/><path d="M50 16 C 62 28, 62 72, 50 84" fill="none" stroke="#1B1D18" stroke-width="4"/></svg>';
+  document.getElementById('brand-icon').innerHTML = BRAND_SVG;
+
+  /* ---------------- Service worker (offline caching + installability) ---------------- */
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){ /* not critical to app function */ });
+    });
+  }
+
+  /* ---------------- Data ---------------- */
+  var STORAGE_KEY = "tennisLogMatches_v1";
+
+  var SEED = [
+    {id:"seed1", data:"2026-08-22", orario:"08:30", avversario:"Carlo Buonadio", superficie:"ERBA", eta:"OVER", set1:"0/6", set2:"7/6", set3:"", esito:"SCONFITTA"},
+    {id:"seed2", data:"2026-08-24", orario:"19:00", avversario:"Marcello Cumenda", superficie:"TERRA", eta:"NESSUNO", set1:"6/7", set2:"", set3:"", esito:"SCONFITTA"},
+    {id:"seed3", data:"2026-08-25", orario:"17:00", avversario:"Davide Granada", superficie:"ERBA", eta:"NESSUNO", set1:"6/1", set2:"6/2", set3:"", esito:"VITTORIA"}
+  ];
+
+  function loadMatches(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw === null){
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED));
+        return SEED.slice();
+      }
+      return JSON.parse(raw);
+    }catch(e){ return []; }
+  }
+  function saveMatches(list){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }catch(e){}
+  }
+  var matches = loadMatches();
+
+  /* ---------------- Tabs ---------------- */
+  var views = { partita: document.getElementById('view-partita'), storico: document.getElementById('view-storico'), statistiche: document.getElementById('view-statistiche') };
+  var tabs = document.querySelectorAll('.tab');
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){ switchView(t.getAttribute('data-view')); });
+  });
+  function switchView(name){
+    Object.keys(views).forEach(function(k){
+      views[k].classList.toggle('active', k === name);
+    });
+    tabs.forEach(function(t){
+      var on = t.getAttribute('data-view') === name;
+      t.classList.toggle('active', on);
+      if(on){ t.setAttribute('aria-current','page'); } else { t.removeAttribute('aria-current'); }
+    });
+    if(name === 'storico') renderStorico();
+    if(name === 'statistiche') renderStatistiche();
+  }
+
+  /* ---------------- Choice groups ---------------- */
+  var formState = { superficie:null, eta:null, esito:null };
+  function wireGroup(groupId, attr, stateKey){
+    var group = document.getElementById(groupId);
+    group.querySelectorAll('.choice').forEach(function(el){
+      el.addEventListener('click', function(){
+        group.querySelectorAll('.choice').forEach(function(o){ o.classList.remove('selected'); });
+        el.classList.add('selected');
+        formState[stateKey] = el.getAttribute(attr);
+      });
+    });
+  }
+  wireGroup('grp-superficie', 'data-surface', 'superficie');
+  wireGroup('grp-eta', 'data-eta', 'eta');
+  wireGroup('grp-esito', 'data-esito', 'esito');
+
+  document.getElementById('f-data').value = new Date().toISOString().slice(0,10);
+
+  /* ---------------- Toast ---------------- */
+  var toastTimer = null;
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  }
+
+  /* ---------------- Form submit ---------------- */
+  document.getElementById('form-partita').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var avversario = document.getElementById('f-avversario').value.trim();
+    var data = document.getElementById('f-data').value;
+
+    if(!data){ showToast('Inserisci la data'); return; }
+    if(!avversario){ showToast('Inserisci l\'avversario'); return; }
+    if(!formState.superficie){ showToast('Seleziona la superficie'); return; }
+    if(!formState.eta){ showToast('Seleziona l\'età avversario'); return; }
+    if(!formState.esito){ showToast('Seleziona il risultato'); return; }
+
+    var match = {
+      id: 'm' + Date.now(),
+      data: data,
+      orario: document.getElementById('f-orario').value,
+      avversario: avversario,
+      superficie: formState.superficie,
+      eta: formState.eta,
+      set1: document.getElementById('f-set1').value.trim(),
+      set2: document.getElementById('f-set2').value.trim(),
+      set3: document.getElementById('f-set3').value.trim(),
+      esito: formState.esito
+    };
+    matches.push(match);
+    saveMatches(matches);
+    showToast('Partita salvata');
+
+    document.getElementById('form-partita').reset();
+    document.getElementById('f-data').value = new Date().toISOString().slice(0,10);
+    ['grp-superficie','grp-eta','grp-esito'].forEach(function(id){
+      document.getElementById(id).querySelectorAll('.choice').forEach(function(o){ o.classList.remove('selected'); });
+    });
+    formState = { superficie:null, eta:null, esito:null };
+  });
+
+  /* ---------------- Storico rendering ---------------- */
+  var ICONS = {
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>'
+  };
+
+  function fmtDate(iso){
+    if(!iso) return '';
+    var p = iso.split('-');
+    if(p.length !== 3) return iso;
+    return p[2] + '/' + p[1] + '/' + p[0];
+  }
+  function scoreText(m){
+    var s = [m.set1, m.set2, m.set3].filter(function(x){ return x; });
+    return s.join('  ·  ');
+  }
+
+  function renderStorico(){
+    var list = document.getElementById('storico-list');
+    if(matches.length === 0){
+      list.innerHTML = '<div class="empty"><b>Nessuna partita registrata</b>Vai su “Partita” per aggiungere il primo risultato.</div>';
+      return;
+    }
+    var sorted = matches.slice().sort(function(a,b){
+      var ka = a.data + ' ' + (a.orario || '00:00');
+      var kb = b.data + ' ' + (b.orario || '00:00');
+      return kb.localeCompare(ka);
+    });
+    list.innerHTML = sorted.map(function(m){
+      var meta = fmtDate(m.data) + (m.orario ? '  ·  ' + m.orario : '') + '<span class="dot">•</span>' + m.superficie + '<span class="dot">•</span>' + labelEta(m.eta);
+      var score = scoreText(m);
+      return '' +
+        '<div class="match-card" data-esito="' + m.esito + '" data-id="' + m.id + '">' +
+          '<div class="match-main">' +
+            '<div class="match-top"><span class="match-opp">' + escapeHtml(m.avversario) + '</span><span class="match-esito">' + labelEsito(m.esito) + '</span></div>' +
+            '<div class="match-meta">' + meta + '</div>' +
+            (score ? '<div class="match-score">' + escapeHtml(score) + '</div>' : '') +
+          '</div>' +
+          '<button class="icon-btn" data-del="' + m.id + '" aria-label="Elimina partita">' + ICONS.trash + '</button>' +
+        '</div>';
+    }).join('');
+
+    list.querySelectorAll('[data-del]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-del');
+        if(confirm('Eliminare questa partita dallo storico?')){
+          matches = matches.filter(function(m){ return m.id !== id; });
+          saveMatches(matches);
+          renderStorico();
+          showToast('Partita eliminata');
+        }
+      });
+    });
+  }
+
+  function labelEta(e){ return e === 'OVER' ? 'Over' : e === 'UNDER' ? 'Under' : 'Nessuno'; }
+  function labelEsito(e){ return e === 'VITTORIA' ? 'Vittoria' : e === 'SCONFITTA' ? 'Sconfitta' : 'Pareggio'; }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  /* ---------------- Statistiche rendering ---------------- */
+  function countEsiti(list){
+    var v=0,s=0,p=0;
+    list.forEach(function(m){
+      if(m.esito==='VITTORIA') v++; else if(m.esito==='SCONFITTA') s++; else if(m.esito==='PAREGGIO') p++;
+    });
+    return {v:v,s:s,p:p,tot:list.length};
+  }
+
+  function renderBreakdownCard(containerId, groups){
+    var el = document.getElementById(containerId);
+    el.innerHTML = groups.map(function(g, idx){
+      var c = countEsiti(g.items);
+      var body;
+      if(c.tot === 0){
+        body = '<div class="bd-empty">Nessuna partita registrata</div>';
+      }else{
+        var pv = (c.v/c.tot*100), ps = (c.s/c.tot*100), pp = (c.p/c.tot*100);
+        body = '' +
+          '<div class="bd-bar">' +
+            (pv>0 ? '<div class="bd-seg v" style="width:'+pv+'%"></div>' : '') +
+            (ps>0 ? '<div class="bd-seg s" style="width:'+ps+'%"></div>' : '') +
+            (pp>0 ? '<div class="bd-seg p" style="width:'+pp+'%"></div>' : '') +
+          '</div>' +
+          '<div class="bd-legend">' +
+            '<span>V <b>' + Math.round(pv) + '%</b></span>' +
+            '<span>S <b>' + Math.round(ps) + '%</b></span>' +
+            '<span>P <b>' + Math.round(pp) + '%</b></span>' +
+          '</div>';
+      }
+      var sep = idx < groups.length - 1 ? 'margin-bottom:20px;' : '';
+      return '<div class="breakdown" style="' + sep + '">' +
+        '<div class="bd-head"><span class="bd-dot" style="background:' + g.color + '"></span><span class="bd-name">' + g.label + '</span><span class="bd-count">' + c.tot + ' giocat' + (c.tot===1?'a':'e') + '</span></div>' +
+        body +
+      '</div>';
+    }).join('');
+  }
+
+  function renderStatistiche(){
+    var c = countEsiti(matches);
+    document.getElementById('tot-v').textContent = c.v;
+    document.getElementById('tot-s').textContent = c.s;
+    document.getElementById('tot-p').textContent = c.p;
+    document.getElementById('tot-n').textContent = c.tot;
+    var pct = c.tot ? Math.round(c.v / c.tot * 100) : 0;
+    document.getElementById('ring-pct').textContent = pct + '%';
+    document.getElementById('ring').style.setProperty('--pct', pct);
+
+    renderBreakdownCard('stat-superficie', [
+      { label:'Erba', color:'var(--grass)', items: matches.filter(function(m){return m.superficie==='ERBA';}) },
+      { label:'Terra', color:'var(--clay)', items: matches.filter(function(m){return m.superficie==='TERRA';}) },
+      { label:'Cemento', color:'var(--hard)', items: matches.filter(function(m){return m.superficie==='CEMENTO';}) }
+    ]);
+    renderBreakdownCard('stat-eta', [
+      { label:'Over', color:'var(--ball)', items: matches.filter(function(m){return m.eta==='OVER';}) },
+      { label:'Under', color:'var(--ball)', items: matches.filter(function(m){return m.eta==='UNDER';}) },
+      { label:'Nessuno', color:'var(--ball)', items: matches.filter(function(m){return m.eta==='NESSUNO';}) }
+    ]);
+  }
+
+  /* ---------------- Export / Import ---------------- */
+  document.getElementById('btn-export').addEventListener('click', function(){
+    var blob = new Blob([JSON.stringify(matches, null, 2)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'tennis-log-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  });
+
+  document.getElementById('btn-import').addEventListener('click', function(){
+    document.getElementById('file-import').click();
+  });
+  document.getElementById('file-import').addEventListener('change', function(ev){
+    var file = ev.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var imported = JSON.parse(reader.result);
+        if(!Array.isArray(imported)) throw new Error('formato non valido');
+        matches = imported;
+        saveMatches(matches);
+        renderStorico();
+        renderStatistiche();
+        showToast('Backup importato');
+      }catch(e){
+        showToast('File non valido');
+      }
+    };
+    reader.readAsText(file);
+    ev.target.value = '';
+  });
+
+  /* ---------------- Init ---------------- */
+  renderStorico();
+  renderStatistiche();
+})();
+</script>
+</body>
+</html>
