@@ -1,1 +1,8 @@
-"D0:1A:94:E3:30:BE:1A:D8:F4:81:77:A0:19:28:DF:01:B6:4B:D4:77:6A:A9:77:6A:1F:21:A0:E7:67:66:7D:3B"
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.avvdelpopolobruno_cyber.twa",
+        "sha256_cert_fingerprints": ["D0:1A:94:E3:30:BE:1A:D8:F4:81:77:A0:19:28:DF:01:B6:4B:D4:77:6A:A9:77:6A:1F:21:A0:E7:67:66:7D:3B"]
+      }
+    }]
