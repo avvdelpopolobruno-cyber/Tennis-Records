@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<meta name="theme-color" content="#1B1D18">
+<meta name="theme-color" content="#FBFAF6">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tennis Log">
@@ -14,26 +14,26 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root{
-    --ink:#1B1D18;
-    --ink-2:#24271F;
-    --ink-3:#2E3226;
-    --line: rgba(243,239,227,0.10);
-    --chalk:#F3EFE3;
-    --chalk-dim: rgba(243,239,227,0.56);
-    --chalk-faint: rgba(243,239,227,0.30);
-    --grass:#4C7A3F;
-    --grass-soft: rgba(76,122,63,0.20);
-    --clay:#C1553A;
-    --clay-soft: rgba(193,85,58,0.20);
-    --hard:#3E6E8E;
-    --hard-soft: rgba(62,110,142,0.20);
-    --ball:#D9E14C;
-    --win:#6FCB74;
-    --win-soft: rgba(111,203,116,0.16);
-    --loss:#E2574C;
-    --loss-soft: rgba(226,87,76,0.16);
-    --draw:#B8B2A0;
-    --draw-soft: rgba(184,178,160,0.16);
+    --ink:#FBFAF6;
+    --ink-2:#F1EFE7;
+    --ink-3:#E7E4D8;
+    --line: rgba(27,29,24,0.12);
+    --chalk:#1B1D18;
+    --chalk-dim: rgba(27,29,24,0.60);
+    --chalk-faint: rgba(27,29,24,0.36);
+    --grass:#3F6B34;
+    --grass-soft: rgba(63,107,52,0.14);
+    --clay:#B14A32;
+    --clay-soft: rgba(177,74,50,0.14);
+    --hard:#2E5C7A;
+    --hard-soft: rgba(46,92,122,0.14);
+    --ball:#8C9200;
+    --win:#2E8B3D;
+    --win-soft: rgba(46,139,61,0.14);
+    --loss:#C3392C;
+    --loss-soft: rgba(195,57,44,0.14);
+    --draw:#6E6858;
+    --draw-soft: rgba(110,104,88,0.14);
     --radius-lg: 20px;
     --radius-md: 14px;
     --radius-sm: 10px;
@@ -185,7 +185,7 @@
   .choice[data-surface="ERBA"].selected{ background: var(--grass-soft); border-color: var(--grass); color: var(--chalk); }
   .choice[data-surface="TERRA"].selected{ background: var(--clay-soft); border-color: var(--clay); color: var(--chalk); }
   .choice[data-surface="CEMENTO"].selected{ background: var(--hard-soft); border-color: var(--hard); color: var(--chalk); }
-  .choice[data-eta].selected{ background: var(--ink); border-color: var(--ball); color: var(--ball); }
+  .choice[data-eta].selected{ background: var(--chalk); border-color: var(--ball); color: var(--ball); }
   .choice[data-esito="VITTORIA"].selected{ background: var(--win-soft); border-color: var(--win); color: var(--win); }
   .choice[data-esito="SCONFITTA"].selected{ background: var(--loss-soft); border-color: var(--loss); color: var(--loss); }
   .choice[data-esito="PAREGGIO"].selected{ background: var(--draw-soft); border-color: var(--draw); color: var(--chalk); }
