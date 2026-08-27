@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tennis-log-v1';
+const CACHE_NAME = 'tennis-log-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
