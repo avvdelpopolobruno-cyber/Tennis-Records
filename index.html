@@ -262,7 +262,7 @@
     padding: 20px 18px;
   }
   .ring-wrap{ position:relative; width:92px; height:92px; flex-shrink:0; }
-  .ring{ width:100%; height:100%; border-radius:50%; background: conic-gradient(var(--win) calc(var(--pct,0) * 3.6deg), var(--ink-3) 0deg); }
+  .ring{ width:100%; height:100%; border-radius:50%; background: var(--ink-3); }
   .ring-hole{ position:absolute; inset:9px; border-radius:50%; background:var(--ink-2); display:flex; align-items:center; justify-content:center; flex-direction:column; }
   .ring-pct{ font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; }
   .ring-label{ font-size:8.5px; letter-spacing:.08em; color:var(--chalk-dim); text-transform:uppercase; margin-top:1px; }
@@ -342,6 +342,35 @@
   }
   .tab svg{ width:20px; height:20px; }
   .tab.active{ color: var(--ball); }
+
+  /* ---------------- Edit sheet ---------------- */
+  .modal-backdrop{
+    position: fixed; inset:0; background: rgba(0,0,0,0.45);
+    opacity:0; pointer-events:none; transition: opacity .2s ease; z-index: 24;
+  }
+  .modal-backdrop.show{ opacity:1; pointer-events:auto; }
+  .edit-sheet{
+    position: fixed; left:0; right:0; bottom:0;
+    max-width: 480px; margin: 0 auto;
+    background: var(--ink-2);
+    border: 1px solid var(--line);
+    border-bottom: none;
+    border-radius: 22px 22px 0 0;
+    padding: 10px 20px calc(22px + var(--safe-bottom));
+    transform: translateY(100%);
+    transition: transform .22s ease;
+    z-index: 25;
+  }
+  .edit-sheet.show{ transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce){
+    .modal-backdrop, .edit-sheet{ transition: none; }
+  }
+  .edit-sheet-handle{
+    width:36px; height:4px; border-radius:3px; background: var(--line);
+    margin: 6px auto 14px;
+  }
+  .edit-sheet-title{ font-weight:800; font-size:15px; margin-bottom:3px; }
+  .edit-sheet-sub{ font-size:12.5px; color:var(--chalk-dim); margin-bottom:16px; }
 
   ::selection{ background: var(--ball); color:#1B1D18; }
 </style>
@@ -429,14 +458,14 @@
         <div class="ring-wrap">
           <div class="ring" id="ring"></div>
           <div class="ring-hole">
-            <div class="ring-pct" id="ring-pct">0%</div>
-            <div class="ring-label">vittorie</div>
+            <div class="ring-pct" id="ring-pct">0</div>
+            <div class="ring-label">partite</div>
           </div>
         </div>
         <div class="vsp-row">
-          <div class="vsp" data-k="V"><div class="vsp-num" id="tot-v">0</div><div class="vsp-lbl">V</div></div>
-          <div class="vsp" data-k="S"><div class="vsp-num" id="tot-s">0</div><div class="vsp-lbl">S</div></div>
-          <div class="vsp" data-k="P"><div class="vsp-num" id="tot-p">0</div><div class="vsp-lbl">P</div></div>
+          <div class="vsp" data-k="V"><div class="vsp-num" id="tot-v">0%</div><div class="vsp-lbl">V</div></div>
+          <div class="vsp" data-k="S"><div class="vsp-num" id="tot-s">0%</div><div class="vsp-lbl">S</div></div>
+          <div class="vsp" data-k="P"><div class="vsp-num" id="tot-p">0%</div><div class="vsp-lbl">P</div></div>
         </div>
       </div>
       <div class="tot-line"><span>Totale partite giocate</span><b id="tot-n">0</b></div>
@@ -469,6 +498,20 @@
       Statistiche
     </button>
   </nav>
+</div>
+
+<div class="modal-backdrop" id="edit-backdrop"></div>
+<div class="edit-sheet" id="edit-sheet">
+  <div class="edit-sheet-handle"></div>
+  <div class="edit-sheet-title">Modifica esito</div>
+  <div class="edit-sheet-sub" id="edit-sheet-sub"></div>
+  <div class="choice-group" id="grp-edit-esito">
+    <div class="choice" data-esito="VITTORIA">Vittoria</div>
+    <div class="choice" data-esito="SCONFITTA">Sconfitta</div>
+    <div class="choice" data-esito="PAREGGIO">Pareggio</div>
+  </div>
+  <button class="btn-save" id="edit-save-btn">Salva modifica</button>
+  <button class="util-btn" id="edit-cancel-btn" style="margin-top:10px; width:100%;">Annulla</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -597,7 +640,8 @@
 
   /* ---------------- Storico rendering ---------------- */
   var ICONS = {
-    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>'
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>',
+    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
   };
 
   function fmtDate(iso){
@@ -632,9 +676,16 @@
             '<div class="match-meta">' + meta + '</div>' +
             (score ? '<div class="match-score">' + escapeHtml(score) + '</div>' : '') +
           '</div>' +
+          '<button class="icon-btn" data-edit="' + m.id + '" aria-label="Modifica esito">' + ICONS.edit + '</button>' +
           '<button class="icon-btn" data-del="' + m.id + '" aria-label="Elimina partita">' + ICONS.trash + '</button>' +
         '</div>';
     }).join('');
+
+    list.querySelectorAll('[data-edit]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        openEditModal(btn.getAttribute('data-edit'));
+      });
+    });
 
     list.querySelectorAll('[data-del]').forEach(function(btn){
       btn.addEventListener('click', function(){
@@ -648,6 +699,51 @@
       });
     });
   }
+
+  /* ---------------- Modifica esito (Storico) ---------------- */
+  var editingId = null;
+  var editEsito = null;
+  var editBackdrop = document.getElementById('edit-backdrop');
+  var editSheet = document.getElementById('edit-sheet');
+  var editGroup = document.getElementById('grp-edit-esito');
+
+  function openEditModal(id){
+    var m = matches.find(function(x){ return x.id === id; });
+    if(!m) return;
+    editingId = id;
+    editEsito = m.esito;
+    document.getElementById('edit-sheet-sub').textContent = escapeHtml(m.avversario) + ' · ' + fmtDate(m.data);
+    editGroup.querySelectorAll('.choice').forEach(function(el){
+      el.classList.toggle('selected', el.getAttribute('data-esito') === editEsito);
+    });
+    editBackdrop.classList.add('show');
+    editSheet.classList.add('show');
+  }
+  function closeEditModal(){
+    editBackdrop.classList.remove('show');
+    editSheet.classList.remove('show');
+    editingId = null;
+  }
+  editGroup.querySelectorAll('.choice').forEach(function(el){
+    el.addEventListener('click', function(){
+      editGroup.querySelectorAll('.choice').forEach(function(o){ o.classList.remove('selected'); });
+      el.classList.add('selected');
+      editEsito = el.getAttribute('data-esito');
+    });
+  });
+  document.getElementById('edit-save-btn').addEventListener('click', function(){
+    if(!editingId || !editEsito) return;
+    var m = matches.find(function(x){ return x.id === editingId; });
+    if(m){
+      m.esito = editEsito;
+      saveMatches(matches);
+      renderStorico();
+      showToast('Esito aggiornato');
+    }
+    closeEditModal();
+  });
+  document.getElementById('edit-cancel-btn').addEventListener('click', closeEditModal);
+  editBackdrop.addEventListener('click', closeEditModal);
 
   function labelEta(e){ return e === 'OVER' ? 'Over' : e === 'UNDER' ? 'Under' : 'Nessuno'; }
   function labelEsito(e){ return e === 'VITTORIA' ? 'Vittoria' : e === 'SCONFITTA' ? 'Sconfitta' : 'Pareggio'; }
@@ -697,13 +793,26 @@
 
   function renderStatistiche(){
     var c = countEsiti(matches);
-    document.getElementById('tot-v').textContent = c.v;
-    document.getElementById('tot-s').textContent = c.s;
-    document.getElementById('tot-p').textContent = c.p;
+    var pv = c.tot ? Math.round(c.v/c.tot*100) : 0;
+    var ps = c.tot ? Math.round(c.s/c.tot*100) : 0;
+    var pp = c.tot ? Math.round(c.p/c.tot*100) : 0;
+    document.getElementById('tot-v').textContent = pv + '%';
+    document.getElementById('tot-s').textContent = ps + '%';
+    document.getElementById('tot-p').textContent = pp + '%';
     document.getElementById('tot-n').textContent = c.tot;
-    var pct = c.tot ? Math.round(c.v / c.tot * 100) : 0;
-    document.getElementById('ring-pct').textContent = pct + '%';
-    document.getElementById('ring').style.setProperty('--pct', pct);
+    document.getElementById('ring-pct').textContent = c.tot;
+
+    var ring = document.getElementById('ring');
+    if(c.tot === 0){
+      ring.style.background = 'var(--ink-3)';
+    }else{
+      var winDeg = c.v/c.tot*360;
+      var lossDeg = c.s/c.tot*360;
+      var winCol = c.v>0 ? 'var(--win) 0deg ' + winDeg + 'deg, ' : '';
+      var lossCol = c.s>0 ? 'var(--loss) ' + winDeg + 'deg ' + (winDeg+lossDeg) + 'deg, ' : '';
+      var drawCol = 'var(--draw) ' + (winDeg+lossDeg) + 'deg 360deg';
+      ring.style.background = 'conic-gradient(' + winCol + lossCol + drawCol + ')';
+    }
 
     renderBreakdownCard('stat-superficie', [
       { label:'Erba', color:'var(--grass)', items: matches.filter(function(m){return m.superficie==='ERBA';}) },
